@@ -18,7 +18,7 @@ def fetch_steam_reviews(app_id, target_review_count=1000):
         params = {
             'json': 1,
             'filter': 'recent',       # Sorts by most recent
-            'language': 'english',    # English only for clean sentiment analysis
+            'language': 'english',    # English only for clean sentiment tracking
             'cursor': cursor,
             'review_type': 'all',
             'purchase_type': 'all',
@@ -56,7 +56,7 @@ def fetch_steam_reviews(app_id, target_review_count=1000):
     return reviews_data
 
 if __name__ == "__main__":
-    # Test case: Cyberpunk 2077
+    # Test case: Cyberpunk 2077 (Famous for a disastrous launch and massive recovery)
     GAME_ID = '1091500' 
     TARGET_REVIEWS = 500
     
