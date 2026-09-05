@@ -1,75 +1,58 @@
 import requests
-import time
 import pandas as pd
+import time
 import os
 
-def fetch_steam_reviews(app_id, target_review_count=1000):
-    """
-    Pulls reviews for a specific Steam game using cursor pagination.
-    """
-    url = f"https://store.steampowered.com/appreviews/{app_id}"
+def fetch_steam_reviews(app_id, max_reviews=500):
+    print(f"\n--- Starting extraction for App ID {app_id} ---")
+    url = f"https://store.steampowered.com/appreviews/{app_id}?json=1"
     
-    reviews_data = []
-    cursor = '*'  # The API requires '*' for the very first page request
+    reviews = []
+    cursor = '*'
     
-    print(f"Starting extraction for App ID: {app_id}...")
-    
-    while len(reviews_data) < target_review_count:
+    while len(reviews) < max_reviews:
         params = {
             'json': 1,
-            'filter': 'recent',       # Sorts by most recent
-            'language': 'english',    # English only for clean sentiment tracking
+            'filter': 'recent',
+            'language': 'english',
             'cursor': cursor,
-            'review_type': 'all',
-            'purchase_type': 'all',
-            'num_per_page': 100       # Max allowed per request
+            'num_per_page': 100
         }
         
         response = requests.get(url, params=params)
         
         if response.status_code != 200:
-            print(f"Error {response.status_code}. Stopping.")
+            print(f"API Error {response.status_code} for game {app_id}")
             break
             
         data = response.json()
         
-        if data.get('success') != 1:
-            print("API returned unsuccessful status. Stopping.")
+        if 'reviews' not in data or not data['reviews']:
             break
             
-        batch = data.get('reviews', [])
+        reviews.extend(data['reviews'])
+        cursor = data['cursor']
+        print(f"Fetched {len(reviews)} reviews...")
         
-        if not batch:
-            print("No more reviews left to pull.")
-            break
-            
-        reviews_data.extend(batch)
-        print(f"Pulled {len(reviews_data)} reviews...")
+        time.sleep(1) # Respect API rate limits
         
-        new_cursor = data.get('cursor')
-        if new_cursor == cursor:
-            break
-            
-        cursor = new_cursor
-        time.sleep(1.5) # CRITICAL: Prevents Steam from IP banning you
-        
-    return reviews_data
+    return reviews[:max_reviews]
 
 if __name__ == "__main__":
-    # Test case: Cyberpunk 2077 (Famous for a disastrous launch and massive recovery)
-    GAME_ID = '1091500' 
-    TARGET_REVIEWS = 500
+    TARGET_GAMES = {
+        1091500: "Cyberpunk 2077", 275850: "No Mans Sky", 
+        379720: "DOOM", 397540: "Borderlands 3",
+        553850: "Helldivers 2", 1716740: "Starfield", 
+        1151340: "Fallout 76", 1086940: "Baldurs Gate 3", 
+        292030: "The Witcher 3", 271590: "Grand Theft Auto V"
+    }
     
-    raw_reviews = fetch_steam_reviews(app_id=GAME_ID, target_review_count=TARGET_REVIEWS)
+    os.makedirs("data/raw", exist_ok=True)
     
-    # Convert to DataFrame
-    df = pd.DataFrame(raw_reviews)
-    
-    # Ensure the raw data folder exists
-    os.makedirs('data/raw', exist_ok=True)
-    
-    # Save raw JSON-like data to CSV
-    output_path = f"data/raw/steam_reviews_{GAME_ID}.csv"
-    df.to_csv(output_path, index=False)
-    
-    print(f"\nSuccess! Raw data saved to {output_path}")
+    for game_id, game_name in TARGET_GAMES.items():
+        raw_reviews = fetch_steam_reviews(game_id, max_reviews=500)
+        if raw_reviews:
+            df = pd.DataFrame(raw_reviews)
+            output_file = f"data/raw/steam_reviews_raw_{game_id}.csv"
+            df.to_csv(output_file, index=False)
+            print(f"Saved {len(df)} reviews for {game_name}")

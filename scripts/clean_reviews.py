@@ -1,29 +1,32 @@
 import pandas as pd
-import ast
 import os
+import ast
 
-def clean_raw_reviews(input_path, output_path):
-    print(f"Loading raw data from {input_path}...")
+def clean_review_data(game_id):
+    input_file = f"data/raw/steam_reviews_raw_{game_id}.csv"
+    output_file = f"data/processed/steam_reviews_clean_{game_id}.csv"
     
-    # Read the raw CSV
-    df = pd.read_csv(input_path)
+    if not os.path.exists(input_file):
+        print(f"Skipping {game_id}: {input_file} not found.")
+        return
+
+    print(f"--- Cleaning Reviews for App ID {game_id} ---")
+    df = pd.read_csv(input_file)
     
-    # The 'author' column comes in as a string representation of a dictionary. 
-    # ast.literal_eval safely turns it back into a real Python dictionary so we can extract data from it.
-    print("Unpacking nested player data...")
-    df['author'] = df['author'].apply(ast.literal_eval)
-    
-    # Extract the exact fields we need for our schema
-    df['author_id'] = df['author'].apply(lambda x: x.get('steamid'))
-    
-    # Playtime is in minutes. We will keep it that way for granular analysis.
-    df['playtime_at_review'] = df['author'].apply(lambda x: x.get('playtime_at_review'))
-    
-    # Convert Steam's Unix timestamp to a clean standard Date/Time
-    print("Formatting timestamps...")
-    df['review_date'] = pd.to_datetime(df['timestamp_created'], unit='s')
-    
-    # Rename columns so they map perfectly to our Postgres database schema
+    def extract_author_data(row, key):
+        try:
+            author_dict = ast.literal_eval(row) if isinstance(row, str) else row
+            return author_dict.get(key, None)
+        except:
+            return None
+
+    if 'author' in df.columns:
+        df['author_id'] = df['author'].apply(lambda x: str(extract_author_data(x, 'steamid')))
+        df['playtime_at_review'] = df['author'].apply(lambda x: extract_author_data(x, 'playtime_at_review'))
+    else:
+        df['author_id'] = 'Unknown'
+        df['playtime_at_review'] = 0
+
     df = df.rename(columns={
         'recommendationid': 'review_id',
         'voted_up': 'recommended',
@@ -31,30 +34,18 @@ def clean_raw_reviews(input_path, output_path):
         'review': 'review_text'
     })
     
-    # Select only the clean columns we want to keep
-    final_cols = [
-        'review_id', 'author_id', 'review_date', 
-        'recommended', 'playtime_at_review', 'helpful_votes', 'review_text'
-    ]
-    df_cleaned = df[final_cols]
+    if 'timestamp_created' in df.columns:
+        df['review_date'] = pd.to_datetime(df['timestamp_created'], unit='s')
     
-    # Drop any rows that are completely empty (just in case)
-    df_cleaned = df_cleaned.dropna(subset=['review_id'])
+    df = df.dropna(subset=['review_id', 'review_text'])
+    final_cols = ['review_id', 'author_id', 'review_date', 'recommended', 'playtime_at_review', 'helpful_votes', 'review_text']
+    df_clean = df[[col for col in final_cols if col in df.columns]]
     
-    # Ensure the processed folder exists
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
-    # Save the polished data
-    df_cleaned.to_csv(output_path, index=False)
-    
-    print(f"Success! Clean data saved to {output_path}\n")
-    print("--- PREVIEW ---")
-    print(df_cleaned.head(3))
+    os.makedirs("data/processed", exist_ok=True)
+    df_clean.to_csv(output_file, index=False)
+    print(f"Success: Cleaned {len(df_clean)} rows and saved to {output_file}")
 
 if __name__ == "__main__":
-    GAME_ID = '1091500' # Cyberpunk 2077
-    
-    INPUT_FILE = f"data/raw/steam_reviews_{GAME_ID}.csv"
-    OUTPUT_FILE = f"data/processed/steam_reviews_clean_{GAME_ID}.csv"
-    
-    clean_raw_reviews(INPUT_FILE, OUTPUT_FILE)
+    TARGET_GAMES = [1091500, 275850, 379720, 397540, 553850, 1716740, 1151340, 1086940, 292030, 271590]
+    for game_id in TARGET_GAMES:
+        clean_review_data(game_id)

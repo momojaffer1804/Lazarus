@@ -4,7 +4,7 @@ import os
 import time
 from dotenv import load_dotenv
 
-def load_data_to_db(csv_path, game_id):
+def load_events_to_db(csv_path, game_id):
     load_dotenv()
     db_url = os.getenv("DATABASE_URL")
     
@@ -15,19 +15,15 @@ def load_data_to_db(csv_path, game_id):
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
         
-    # FIX 1: Add pool_pre_ping
     engine = create_engine(db_url, pool_pre_ping=True)
     
     create_table_query = """
-    CREATE TABLE IF NOT EXISTS reviews (
-        review_id BIGINT PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS patch_events (
+        event_id TEXT PRIMARY KEY,
         game_id INT,
-        author_id TEXT,
-        review_date TIMESTAMP,
-        recommended BOOLEAN,
-        playtime_at_review INT,
-        helpful_votes INT,
-        review_text TEXT
+        event_title TEXT,
+        event_date DATE,
+        url TEXT
     );
     """
     
@@ -37,27 +33,23 @@ def load_data_to_db(csv_path, game_id):
             conn.commit()
 
         df = pd.read_csv(csv_path)
-        df['game_id'] = game_id
-
-        df.to_sql('reviews', engine, if_exists='append', index=False, method='multi')
-        print(f"Success! {len(df)} rows inserted for App ID {game_id}.")
+        df.to_sql('patch_events', engine, if_exists='append', index=False, method='multi')
+        print(f"Success! {len(df)} patches inserted for App ID {game_id}.")
         
     except FileNotFoundError:
         print(f"Error: Could not find {csv_path}.")
     except Exception as e:
-        print(f"Error for {game_id} (likely duplicate review_ids): {e}")
+        print(f"Error during insertion for {game_id}: {e}")
     finally:
-        # FIX 2: Explicitly close the connection pool
         engine.dispose()
 
 if __name__ == "__main__":
     TARGET_GAMES = [1091500, 275850, 379720, 397540, 553850, 1716740, 1151340, 1086940, 292030, 271590]
     for game_id in TARGET_GAMES:
-        CLEAN_CSV = f"data/processed/steam_reviews_clean_{game_id}.csv"
-        if os.path.exists(CLEAN_CSV):
-            print(f"\n--- Loading Reviews for App ID {game_id} ---")
-            load_data_to_db(CLEAN_CSV, game_id)
-            # FIX 3: Let the DB breathe
+        CSV_FILE = f"data/raw/patch_events_{game_id}.csv"
+        if os.path.exists(CSV_FILE):
+            print(f"\n--- Loading Patches for App ID {game_id} ---")
+            load_events_to_db(CSV_FILE, game_id)
             time.sleep(2)
         else:
-            print(f"Skipping {game_id}: Clean CSV not found.")
+            print(f"Skipping {game_id}: Patch CSV not found.")
