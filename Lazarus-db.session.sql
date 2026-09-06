@@ -1,3 +1,6 @@
+-- =========================================================================
+-- 1. OVERALL LIFETIME SENTIMENT & PLAYTIME
+-- =========================================================================
 SELECT 
     recommended AS is_positive_review,
     COUNT(review_id) AS total_reviews,
@@ -7,7 +10,9 @@ GROUP BY recommended
 ORDER BY total_reviews DESC;
 
 
---finding critics with 40+ hrs and negative review
+-- =========================================================================
+-- 2. THE CRITIC FINDER: Negative reviews with 40+ hours of playtime
+-- =========================================================================
 SELECT 
     review_date,
     ROUND(playtime_at_review / 60.0, 1) AS hours_played,
@@ -20,7 +25,9 @@ ORDER BY helpful_votes DESC
 LIMIT 5;
 
 
-
+-- =========================================================================
+-- 3. THE GOD QUERY: Cross-Game Patch Sentiment Delta (Redemption Index)
+-- =========================================================================
 WITH GameBaselines AS (
     -- Step 1: Calculate the overall lifetime sentiment for every game
     SELECT 
@@ -59,7 +66,6 @@ SELECT
     g.total_lifetime_reviews,
     g.lifetime_approval AS baseline_rating,
     p.post_patch_approval AS active_dev_rating,
-    -- The critical metric: Does active patching actually improve their baseline score?
     ROUND(COALESCE(p.post_patch_approval, g.lifetime_approval) - g.lifetime_approval, 1) AS patch_sentiment_bump
 FROM GameBaselines g
 LEFT JOIN PatchImpact p ON g.game_id = p.game_id

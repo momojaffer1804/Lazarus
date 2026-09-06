@@ -38,6 +38,9 @@ def clean_review_data(game_id):
         df['review_date'] = pd.to_datetime(df['timestamp_created'], unit='s')
     
     df = df.dropna(subset=['review_id', 'review_text'])
+    # Remove cursor pagination duplicates
+    df = df.drop_duplicates(subset=['review_id'])
+    
     final_cols = ['review_id', 'author_id', 'review_date', 'recommended', 'playtime_at_review', 'helpful_votes', 'review_text']
     df_clean = df[[col for col in final_cols if col in df.columns]]
     

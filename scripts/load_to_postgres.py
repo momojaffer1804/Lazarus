@@ -15,7 +15,6 @@ def load_data_to_db(csv_path, game_id):
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
         
-    # FIX 1: Add pool_pre_ping
     engine = create_engine(db_url, pool_pre_ping=True)
     
     create_table_query = """
@@ -32,24 +31,25 @@ def load_data_to_db(csv_path, game_id):
     """
     
     try:
-        with engine.connect() as conn:
+        # 1. Force a strict commit for table creation
+        with engine.begin() as conn:
             conn.execute(text(create_table_query))
-            conn.commit()
 
         df = pd.read_csv(csv_path)
         df['game_id'] = game_id
 
-        df.to_sql('reviews', engine, if_exists='append', index=False, method='multi')
-        print(f"Success! {len(df)} rows inserted for App ID {game_id}.")
+        # 2. Force a strict commit for the Pandas insert
+        with engine.begin() as conn:
+            df.to_sql('reviews', conn, if_exists='append', index=False, method='multi')
+            
+        print(f"Success! {len(df)} rows actually committed for App ID {game_id}.")
         
     except FileNotFoundError:
         print(f"Error: Could not find {csv_path}.")
     except Exception as e:
-        print(f"Error for {game_id} (likely duplicate review_ids): {e}")
+        print(f"Error for {game_id}: {e}")
     finally:
-        # FIX 2: Explicitly close the connection pool
         engine.dispose()
-
 if __name__ == "__main__":
     TARGET_GAMES = [1091500, 275850, 379720, 397540, 553850, 1716740, 1151340, 1086940, 292030, 271590]
     for game_id in TARGET_GAMES:
