@@ -4,9 +4,9 @@ We've all seen it happen: a game launches completely broken, gets trashed by pla
 
 Can a single patch really save a broken game? Instead of relying on forum opinions and vibes, I built this project to track real Steam reviews and mathematically prove whether major updates actually turn player sentiment around.
 
-
 ## Project Structure
 
+```text
 steam-lifecycle-analysis
 |-- .github
 |-- .venv
@@ -15,6 +15,8 @@ steam-lifecycle-analysis
 |-- notebooks
 |-- scripts
 |-- sql
+```
+
 
 ## System Architecture
 
