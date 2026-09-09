@@ -25,12 +25,12 @@ steam-lifecycle-analysis
 3. Statistical Modeling (SQL): A two-proportion Z-test evaluates the 30-day post-patch sentiment delta against the lifetime baseline approval rating, calculating statistical significance to eliminate small-sample bias.
 4. Visualization: A Dockerized Apache Superset instance connects to the Supabase connection pooler to serve interactive business intelligence dashboards.
 
-## Engineering Challenges
+## Challenges and Solutions
 
-* Bypassed Docker IPv6 network limits by routing the local Superset container through a Supabase IPv4 connection pooler.
-* Resolved silent database rollbacks and stopped external extensions from wiping cloud tables.
-* Fixed mismatched timelines between reviews and patches by injecting test dates to prove the pipeline works.
-* Replaced basic math with a Two-Proportion Z-Test in SQL to prove which game comebacks were statistically real and not just random noise.
+* Overcame Docker's native IPv6 network limitations by routing the local Superset container through a Supabase IPv4 connection pooler.
+* Addressed silent SQLAlchemy database rollbacks and accidental cloud table truncations by enforcing strict transaction commits and locking down schema structures.
+* Bridged the gap between scraped recent reviews and historical patch dates by injecting synthetic test dates to validate the data pipeline's functionality.
+* Eliminated small-sample bias by replacing basic percentage comparisons with a Two-Proportion Z-Test in SQL to mathematically verify if a game's comeback was statistically significant.
 
 ## Local Setup
 
