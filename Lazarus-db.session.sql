@@ -1,6 +1,6 @@
--- =========================================================================
+
 -- 1. OVERALL LIFETIME SENTIMENT & PLAYTIME
--- =========================================================================
+
 SELECT 
     recommended AS is_positive_review,
     COUNT(review_id) AS total_reviews,
@@ -10,9 +10,9 @@ GROUP BY recommended
 ORDER BY total_reviews DESC;
 
 
--- =========================================================================
--- 2. THE CRITIC FINDER: Negative reviews with 40+ hours of playtime
--- =========================================================================
+
+-- 2. Critics with Negative reviews and 40+ hours of playtime
+
 SELECT 
     review_date,
     ROUND(playtime_at_review / 60.0, 1) AS hours_played,
@@ -25,9 +25,9 @@ ORDER BY helpful_votes DESC
 LIMIT 5;
 
 
--- =========================================================================
+
 -- 3. THE GOD QUERY: Cross-Game Patch Sentiment Delta (Redemption Index)
--- =========================================================================
+
 WITH GameBaselines AS (
     -- Step 1: Calculate the overall lifetime sentiment for every game
     SELECT 
