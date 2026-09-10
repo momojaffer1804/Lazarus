@@ -25,6 +25,9 @@ steam-lifecycle-analysis
 3. Statistical Modeling (SQL): A two-proportion Z-test evaluates the 30-day post-patch sentiment delta against the lifetime baseline approval rating, calculating statistical significance to eliminate small-sample bias.
 4. Visualization: A Dockerized Apache Superset instance connects to the Supabase connection pooler to serve interactive business intelligence dashboards.
 
+## Results: Pre vs. Post-Patch Sentiment
+![Pre vs Post Patch Sentiment](assets/pre-vs-post-patch-sentiment.jpg)
+
 ## Challenges and Solutions
 
 * Overcame Docker's native IPv6 network limitations by routing the local Superset container through a Supabase IPv4 connection pooler.
