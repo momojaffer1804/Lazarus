@@ -25,8 +25,18 @@ steam-lifecycle-analysis
 3. Statistical Modeling (SQL): A two-proportion Z-test evaluates the 30-day post-patch sentiment delta against the lifetime baseline approval rating, calculating statistical significance to eliminate small-sample bias.
 4. Visualization: A Dockerized Apache Superset instance connects to the Supabase connection pooler to serve interactive business intelligence dashboards.
 
-## Results: Pre vs. Post-Patch Sentiment
-![Pre vs Post Patch Sentiment](assets/pre-vs-post-patch-sentiment.jpg)
+## Dashboard: Steam Redemption Index
+
+Interactive Business Intelligence dashboard built with Apache Superset (Preset), visualizing the statistical impact of game updates on player sentiment over time. 
+
+![Steam Redemption Index Dashboard](assets/Steam_Redemption_Index_dashboard.png)
+
+*Key Metrics Tracked:*
+* **Pre vs. Post-Patch Sentiment:** Grouped bar chart comparing a game's lifetime baseline approval against its 30-day post-update reception.
+* **Redemption Index Leaderboard:** Horizontal bar chart ranking titles by their total sentiment shift (`raw_delta`).
+* **Sentiment Delta vs. Review Volume:** Scatter plot isolating high-impact community shifts from low-sample statistical noise.
+* **Patch Distribution:** Donut chart breaking down update frequency across the 321 tracked patches.
+* **Topline KPIs:** High-level metrics tracking total analyzed updates and global average sentiment shifts.
 
 ## Challenges and Solutions
 
